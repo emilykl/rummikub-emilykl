@@ -13,6 +13,14 @@ def main():
 
     # 3 red, 3 red, 4 black, 4 red, 5 red, 4 yellow, 4 white, 3 yellow, 3 white
     tiles_input = bag(["3R", "3R", "4B", "4R", "5R", "4Y", "4W", "3Y", "3W"])
+    # Solution to the above:
+    #  3R* 3Y 3W
+    #  4R  4Y 4W 4B
+    #  5R
+    #  
+    #  3R 4R 5R
+    #  3R 3Y 3W
+    #  4Y 4W 4B
 
     tiles = parse_tiles(tiles_input)
 
@@ -26,18 +34,20 @@ def main():
     # print(f"sets: {sets}")
 
     all_solutions = run_dfs(tiles, tilesets, return_all=True)
+    all_solutions.sort()
+    all_solutions.reverse()
 
     for sol in all_solutions:
         print("\nSolution:")
         print(sol)
-
+        print(f"Leftovers: {pretty(sol.leftovers(tiles))}")
     print("\n===\n")
 
     best_solution = min(all_solutions)
     print(f"Best solution:")
     print(best_solution)
     print(f"Covers {best_solution.size()}/{len(tiles)} tiles")
-
+    print(f"Leftovers: {pretty(best_solution.leftovers(tiles))}")
 
 """
 OK now technically we have enough info to implement graph search to find
@@ -96,10 +106,8 @@ def run_dfs(tiles, tilesets, return_all=False):
         return min(visited)
 
 
-def print_node(node):
-    return "Node containing the following tilesets:" + "\n".join(
-        ["  " + str(list(ts)) for ts in node.tilesets()]
-    )
+def pretty(tileset):
+    return " ".join([str(t[0]) + t[1] for t in sorted(list(tileset))])
 
 
 # Sigh, I didn't really want to make objects for this, but defining a Node
@@ -117,7 +125,7 @@ class Node:
 
     def __str__(self):
         return "Node containing the following tilesets:\n" + "\n".join(
-            ["  " + str(list(ts)) for ts in self._tilesets]
+            ["  " + pretty(ts) for ts in self._tilesets]
         )
 
     def size(self):
@@ -134,6 +142,11 @@ class Node:
     # of this node.
     def _tiles_used(self):
         return bag([t for _tiles in self._tilesets for t in _tiles])
+
+    # Return a bag containing the tiles in `tiles` which are
+    # NOT used in this node
+    def leftovers(self, tiles):
+        return bag(tiles) - self._tiles_used()
 
     # Determine whether node is valid for the given set of tiles
     # A node is valid if all tilesets in the node can be made
@@ -230,9 +243,9 @@ def sequences(tiles):
     # in a list of already-sorted tiles
     sequences = []
     for i in range(len(tiles)):
-        for j in range(i + 3, len(tiles)):
+        for j in range(i + 3, len(tiles)+1):
             if [tile[0] for tile in tiles[i:j]] == list(
-                range(tiles[i][0], tiles[j][0])
+                range(tiles[i][0], tiles[j-1][0]+1)
             ):
                 sequences.append(frozenset(tiles[i:j]))
     return frozenset(sequences)
