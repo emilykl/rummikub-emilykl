@@ -1,15 +1,21 @@
 from heapq import heappush, heappop, heapify
 import itertools
+import time
 
-from collections_extended import bag
+from collections_extended import bag, frozenbag
 
 
 def main():
 
-    tiles_input = bag(["4B", "5B", "6B", "7B", "8B", "8Y", "8R", "8K", "1B"])
+    # tiles_input = bag(["4B", "5B", "6B", "7B", "8B", "8Y", "8R", "8K", "1B"])
 
     # 3 red, 3 red, 4 black, 4 red, 5 black, 5 red
     # tiles_input = bag(["3R", "3R", "4K", "4R", "5B", "5R"])
+    # Unsolvable
+
+    # 3 red, 3 red, 4 black, 4 red, 5 red, 4 yellow, 4 white
+    # tiles_input = bag(["3R", "3R", "4K", "4R", "5R", "4Y", "4W"])
+    # Unsolvable
 
     # 3 red, 3 red, 4 black, 4 red, 5 red, 4 yellow, 4 white, 3 yellow, 3 white
     tiles_input = bag(["3R", "3R", "4B", "4R", "5R", "4Y", "4W", "3Y", "3W"])
@@ -17,21 +23,56 @@ def main():
     #  3R* 3Y 3W
     #  4R  4Y 4W 4B
     #  5R
-    #  
+    #
     #  3R 4R 5R
     #  3R 3Y 3W
     #  4Y 4W 4B
 
+    # tiles_input_list = [
+    #         "4B",
+    #         "5B",
+    #         "6B",
+    #         "7B",
+    #         "8B",
+    #         "8Y",
+    #         "8R",
+    #         "8K",
+    #         "1B",
+    #         "3R",
+    #         "3R",
+    #         "4K",
+    #         "4R",
+    #         "5B",
+    #         "5R",
+    #         "3R",
+    #         "3R",
+    #         "4K",
+    #         "4R",
+    #         "5R",
+    #         "4Y",
+    #         "4W",
+    #         "3R",
+    #         "3R",
+    #         "4B",
+    #         "4R",
+    #         "5R",
+    #         "4Y",
+    #         "4W",
+    #         "3Y",
+    #         "3W",
+    #     ]
+    # tiles_input = bag(tiles_input_list)
+
+    solve(tiles_input)
+
+
+def solve(tiles_input):
     tiles = parse_tiles(tiles_input)
 
     runs = find_runs(tiles)
     sets = find_sets(tiles)
 
     tilesets = runs.union(sets)
-
-    # print(f"tiles: {tiles}")
-    # print(f"runs: {runs}")
-    # print(f"sets: {sets}")
 
     all_solutions = run_dfs(tiles, tilesets, return_all=True)
     all_solutions.sort()
@@ -47,7 +88,20 @@ def main():
     print(f"Best solution:")
     print(best_solution)
     print(f"Covers {best_solution.size()}/{len(tiles)} tiles")
-    print(f"Leftovers: {pretty(best_solution.leftovers(tiles))}")
+    print(f"Leftovers: {pretty(best_solution.leftovers(tiles))}\n")
+
+def solve_all_prefixes(tiles_input_list):
+    times = []
+    for i in range(1, len(tiles_input_list)):
+        start = time.time()
+        solve(bag(tiles_input_list[:i]))
+        elapsed = time.time() - start
+        times.append(elapsed)
+
+    print("---------")
+    for i, t in enumerate(times):
+        print(f"Solved {i} tiles in {t:.2f} seconds")
+
 
 """
 OK now technically we have enough info to implement graph search to find
@@ -93,9 +147,13 @@ def run_dfs(tiles, tilesets, return_all=False):
         if curr_node.is_solution(tiles) and not return_all:
             break
 
-        # Otherwise, add current node's neighbors to to-do queue
+        # Otherwise, add current node's neighbors to to-do queue,
+        # iff it's not equivalent to any node in visited or to-do
         for neighbor in curr_node.neighbors(tilesets, tiles):
-            heappush(to_do, neighbor)
+            if not any([neighbor.is_equivalent(v) for v in visited]) and not any(
+                [neighbor.is_equivalent(t) for t in to_do]
+            ):
+                heappush(to_do, neighbor)
 
     # Now, visited list contains all solutions we have tried
     # Get the min node in the list to find the best solution,
@@ -159,6 +217,12 @@ class Node:
     # tilesets are exactly the same tiles passed to this function.
     def is_solution(self, tiles):
         return self._tiles_used() == tiles
+
+    # Returns True if this Node is equivalent to the other Node;
+    # i.e., they contain the same tilesets (order does not matter
+    # for either tiles or tilesets)
+    def is_equivalent(self, other):
+        return self._tilesets == other._tilesets
 
     # Based on the given tiles and valid tilesets,
     # return the list of nodes reachable from this node.
@@ -243,9 +307,9 @@ def sequences(tiles):
     # in a list of already-sorted tiles
     sequences = []
     for i in range(len(tiles)):
-        for j in range(i + 3, len(tiles)+1):
+        for j in range(i + 3, len(tiles) + 1):
             if [tile[0] for tile in tiles[i:j]] == list(
-                range(tiles[i][0], tiles[j-1][0]+1)
+                range(tiles[i][0], tiles[j - 1][0] + 1)
             ):
                 sequences.append(frozenset(tiles[i:j]))
     return frozenset(sequences)
