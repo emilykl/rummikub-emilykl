@@ -1,5 +1,6 @@
 from heapq import heappush, heappop, heapify
 import itertools
+import sys
 import time
 
 from collections_extended import bag, frozenbag
@@ -7,63 +8,27 @@ from collections_extended import bag, frozenbag
 
 def main():
 
-    # tiles_input = bag(["4B", "5B", "6B", "7B", "8B", "8Y", "8R", "8K", "1B"])
+    # Get input file from command-line args
+    if len(sys.argv) < 2:
+        print("\nUsage: python rummikub.py input_file_path")
+        print("\nFor example:")
+        print("> python rummikub.py input/input4.txt\n")
+        sys.exit()
+    input_file_path = sys.argv[1]
 
-    # 3 red, 3 red, 4 black, 4 red, 5 black, 5 red
-    # tiles_input = bag(["3R", "3R", "4K", "4R", "5B", "5R"])
-    # Unsolvable
+    # Read input file
+    tiles_input = bag(read_input_file(input_file_path))
 
-    # 3 red, 3 red, 4 black, 4 red, 5 red, 4 yellow, 4 white
-    # tiles_input = bag(["3R", "3R", "4K", "4R", "5R", "4Y", "4W"])
-    # Unsolvable
-
-    # 3 red, 3 red, 4 black, 4 red, 5 red, 4 yellow, 4 white, 3 yellow, 3 white
-    tiles_input = bag(["3R", "3R", "4B", "4R", "5R", "4Y", "4W", "3Y", "3W"])
-    # Solution to the above:
-    #  3R* 3Y 3W
-    #  4R  4Y 4W 4B
-    #  5R
-    #
-    #  3R 4R 5R
-    #  3R 3Y 3W
-    #  4Y 4W 4B
-
-    # tiles_input_list = [
-    #         "4B",
-    #         "5B",
-    #         "6B",
-    #         "7B",
-    #         "8B",
-    #         "8Y",
-    #         "8R",
-    #         "8K",
-    #         "1B",
-    #         "3R",
-    #         "3R",
-    #         "4K",
-    #         "4R",
-    #         "5B",
-    #         "5R",
-    #         "3R",
-    #         "3R",
-    #         "4K",
-    #         "4R",
-    #         "5R",
-    #         "4Y",
-    #         "4W",
-    #         "3R",
-    #         "3R",
-    #         "4B",
-    #         "4R",
-    #         "5R",
-    #         "4Y",
-    #         "4W",
-    #         "3Y",
-    #         "3W",
-    #     ]
-    # tiles_input = bag(tiles_input_list)
-
+    # Solve tiles
     solve(tiles_input)
+
+
+def read_input_file(filepath):
+    with open(filepath) as f:
+        lines = f.read().split("\n")
+        # Remove empty lines and comments
+        lines = [l for l in lines if l and not l.startswith("#")]
+        return lines
 
 
 def solve(tiles_input):
@@ -90,17 +55,18 @@ def solve(tiles_input):
     print(f"Covers {best_solution.size()}/{len(tiles)} tiles")
     print(f"Leftovers: {pretty(best_solution.leftovers(tiles))}\n")
 
+
 def solve_all_prefixes(tiles_input_list):
     times = []
-    for i in range(1, len(tiles_input_list)):
+    for i in range(1, len(tiles_input_list) + 1):
         start = time.time()
         solve(bag(tiles_input_list[:i]))
         elapsed = time.time() - start
-        times.append(elapsed)
+        times.append((len(tiles_input_list[:i]), elapsed))
 
     print("---------")
-    for i, t in enumerate(times):
-        print(f"Solved {i} tiles in {t:.2f} seconds")
+    for n, t in times:
+        print(f"{n},{t:.2f}")
 
 
 """
