@@ -3,7 +3,7 @@ import itertools
 import sys
 import time
 
-from collections_extended import bag, frozenbag
+from collections_extended import bag
 
 
 def main():
@@ -54,19 +54,6 @@ def solve(tiles_input):
     print(best_solution)
     print(f"Covers {best_solution.size()}/{len(tiles)} tiles")
     print(f"Leftovers: {pretty(best_solution.leftovers(tiles))}\n")
-
-
-def solve_all_prefixes(tiles_input_list):
-    times = []
-    for i in range(1, len(tiles_input_list) + 1):
-        start = time.time()
-        solve(bag(tiles_input_list[:i]))
-        elapsed = time.time() - start
-        times.append((len(tiles_input_list[:i]), elapsed))
-
-    print("---------")
-    for n, t in times:
-        print(f"{n},{t:.2f}")
 
 
 """
